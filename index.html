@@ -146,6 +146,7 @@ const LANGS=[
  ["Arabic","ar","ar","ar"],["Hindi","hi","hi","hi"],["Gujarati","gu","gu","gu"],["Indonesian","id","id","id"],
  ["Thai","th","th","th"],["Vietnamese","vi","vi","vi"],["Polish","pl","pl","pl"],["Swedish","sv","sv","sv"]
 ];
+const BASE_LEN=LANGS.length;
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const langBox=$("langs");
@@ -164,11 +165,11 @@ function setSelected(names){
   names.forEach(n=>{const c=langBox.querySelector(`input[value="${ensureLang(n)}"]`);if(c)c.checked=true;});
 }
 const picked=()=>[...langBox.querySelectorAll("input:checked")].map(c=>LANGS[+c.value]);
-function saveSel(){try{localStorage.setItem("stringsLangs",JSON.stringify(picked().map(l=>l[2])));}catch(e){}}
+function saveSel(){}
 langBox.onchange=saveSel;
 $("all").onclick=()=>{langBox.querySelectorAll("input").forEach(c=>c.checked=true);saveSel();};
 $("none").onclick=()=>{langBox.querySelectorAll("input").forEach(c=>c.checked=false);saveSel();};
-try{const s=JSON.parse(localStorage.getItem("stringsLangs")||"null");setSelected(s&&s.length?s:["es","fr","de","it"]);}catch(e){setSelected(["es","fr","de","it"]);}
+try{localStorage.removeItem("stringsLangs");}catch(e){}
 
 // ---------- engine ----------
 const hasChrome="Translator" in self;
@@ -220,10 +221,14 @@ $("file").onchange=async e=>{const f=e.target.files[0];if(f){srcName=f.name;$("s
 const getSources=()=>$("src").value.trim()?{[srcName]:$("src").value}:folderSources;
 
 // ---------- translation ----------
+function tokenize(value){
+  const ph=[];
+  const t=value.replace(PROTECT,m=>{ph.push(m);return `[[${ph.length-1}]]`;});
+  return {t,ph};
+}
 async function translateValue(value,tr){
   if(!value.trim())return value;
-  const ph=[];
-  const tokenized=value.replace(PROTECT,m=>{ph.push(m);return `[[${ph.length-1}]]`;});
+  const {t:tokenized,ph}=tokenize(value);
   if(!tokenized.replace(/\[\[\d+\]\]|[\s\W]/g,""))return value;
   let out=await tr(tokenized);
   const found=[...out.matchAll(/\[\[\s*(\d+)\s*\]\]/g)].map(m=>+m[1]).sort((a,b)=>a-b);
@@ -368,7 +373,7 @@ async function run(resume){
             tr=tr||await makeTranslator(lang,st,ctl.signal);
             st.textContent=`${name}: ${i+1} of ${todo.length} new`;
             cache[ck]=await translateValue(todo[i].val,tr);
-            if(engine()!=="chrome")await sleep(120);
+            if(["gt","mm"].includes(engine()))await sleep(120);
           }
           vals[todo[i].key]=cache[ck];nNew++;done++;bump();
         }
@@ -390,11 +395,25 @@ async function run(resume){
 $("go").onclick=()=>run(false);
 $("resume").onclick=()=>run(true);
 $("stop").onclick=()=>{stopFlag=true;ctl&&ctl.abort();$("stop").disabled=true;};
-$("clear").onclick=()=>{
+const FOLDER_HINT=$("folderInfo").textContent;
+function resetAll(){ // back to a fresh page
+  if(running)return;
   cache={};outByLang={};sKept=0;pending=false;
+  folderSources={};for(const k in existing)delete existing[k];
+  srcName="Localizable.strings";
+  $("folder").value="";$("file").value="";$("src").value="";
+  $("force").checked=false;$("email").value="";
+  $("folderInfo").textContent=FOLDER_HINT;
+  document.querySelector('input[name=engine][value=gt]').checked=true;engineUI();
+  LANGS.length=BASE_LEN;                                   // drop custom languages found in a folder
+  langBox.querySelectorAll(".chip").forEach((c,i)=>{if(i>=BASE_LEN)c.remove();});
+  langBox.querySelectorAll("input").forEach(c=>c.checked=false);
+  document.querySelectorAll("details").forEach(d=>d.open=false);
   $("results").innerHTML="";$("prog").style.width="0";stats(0);setUI();
-};
-setUI();stats(0);
+}
+$("clear").onclick=resetAll;
+window.addEventListener("pageshow",resetAll);              // also on reload / back button (browsers restore form state)
+resetAll();
 </script>
 </body>
 </html>
