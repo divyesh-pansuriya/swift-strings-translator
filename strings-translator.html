@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strings Translator</title>
+<style>
+:root{--bg:#f3f4f8;--card:#fff;--fg:#151823;--mut:#6a7085;--line:#e3e5ee;--line2:#c9cddd;--ac:#3b5bfd;--acsoft:#e8ecff;--ok:#16996a;--warn:#c9830b;--bad:#d03b3b;--shadow:0 1px 2px rgba(20,24,40,.05),0 8px 24px rgba(20,24,40,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#181b25;--fg:#e9ebf3;--mut:#8f95aa;--line:#272b39;--line2:#3a3f54;--ac:#7c93ff;--acsoft:#222a52;--ok:#4cc79a;--warn:#e8b04a;--bad:#f07a7a;--shadow:none}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:32px 20px 64px}
+header{margin-bottom:24px}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 4px}
+header p{margin:0;color:var(--mut)}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+.right{position:sticky;top:16px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.right{position:static}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:18px}
+.card:last-child{margin-bottom:0}
+h2{font-size:16px;margin:0 0 12px;letter-spacing:-.01em}
+.hint{color:var(--mut);font-size:13px}
+code{background:var(--acsoft);padding:1px 6px;border-radius:5px;font-size:12.5px}
+.drop{position:relative;display:block;border:1.5px dashed var(--line2);border-radius:12px;padding:22px 16px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+.drop:hover,.drop:focus-within{background:var(--acsoft);border-color:var(--ac)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop b{display:block;font-size:15px}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--mut);font-size:13px}
+textarea{width:100%;height:96px;margin-top:8px;font:12.5px/1.45 ui-monospace,Menlo,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px}
+input[type=email]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);width:100%;margin-top:8px}
+.check{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:14px;cursor:pointer}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.seg label{position:relative;text-align:center}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:8px 6px;border-radius:9px;font-size:13px;font-weight:500;color:var(--mut);transition:background .15s}
+.seg input:checked+span{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg input:focus-visible+span{outline:2px solid var(--ac)}
+.seg input:disabled+span{opacity:.4}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.chip span{display:inline-block;padding:6px 13px;border:1px solid var(--line);border-radius:999px;font-size:13px;transition:all .12s}
+.chip:hover span{border-color:var(--ac)}
+.chip input:checked+span{background:var(--ac);border-color:var(--ac);color:#fff}
+.chip input:focus-visible+span{outline:2px solid var(--ac);outline-offset:2px}
+.tools{display:flex;gap:8px;margin-bottom:12px}
+.btn{font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;transition:filter .12s}
+.btn:hover:not(:disabled){filter:brightness(.96)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.btn.primary{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.stop{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:5px 11px;font-size:13px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:16px 0 12px}
+.bar i{display:block;height:100%;width:0;background:var(--ac);border-radius:99px;transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:10px;padding:8px 12px}
+.stat b{display:block;font-size:20px;letter-spacing:-.02em}
+.stat span{font-size:12px;color:var(--mut)}
+.res{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.res:first-child{border-top:0}
+.res .nm{font-weight:600}
+.res .st{font-size:13px;color:var(--mut)}
+.res.done .st{color:var(--ok)}.res.paused .st{color:var(--warn)}.res.bad .st{color:var(--bad)}
+.out{margin-top:12px;padding-top:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Strings Translator</h1>
+    <p>Translate <code>en.lproj</code> into every language of your iOS project and get <code>es.lproj/Localizable.strings</code> folders back.</p>
+  </header>
+
+  <div class="grid">
+    <div class="left">
+      <section class="card">
+        <h2>Source</h2>
+        <label class="drop">
+          <input type="file" id="folder" webkitdirectory>
+          <b>Choose your project folder</b>
+          <span class="hint" id="folderInfo">The folder that contains en.lproj. Every .strings file in it is translated, and languages are detected from the other .lproj folders. Existing translations are kept.</span>
+        </label>
+        <details>
+          <summary>Or translate a single file / paste text</summary>
+          <input type="file" id="file" accept=".strings,.txt" style="margin-top:8px">
+          <textarea id="src" spellcheck="false" placeholder='"welcome_title" = "Welcome, %@!";'></textarea>
+        </details>
+        <label class="check"><input type="checkbox" id="force"> Retranslate everything (ignore existing translations)</label>
+      </section>
+
+      <section class="card">
+        <h2>Languages</h2>
+        <div class="tools"><button class="btn sm" id="all">Select all</button><button class="btn sm" id="none">None</button></div>
+        <div class="chips" id="langs"></div>
+      </section>
+    </div>
+
+    <div class="right">
+      <section class="card">
+        <h2>Engine</h2>
+        <div class="seg" id="engines">
+          <label><input type="radio" name="engine" value="gt" checked><span>Google web</span></label>
+          <label><input type="radio" name="engine" value="chrome"><span>Chrome offline</span></label>
+          <label><input type="radio" name="engine" value="mm"><span>MyMemory</span></label>
+        </div>
+        <div class="hint" id="engineHint" style="margin-top:10px"></div>
+        <div id="mmRow" hidden><input type="email" id="email" placeholder="Email (optional, raises the free daily limit)"></div>
+      </section>
+
+      <section class="card">
+        <div class="actions">
+          <button class="btn primary" id="go">Translate</button>
+          <button class="btn stop" id="stop" disabled>Stop</button>
+          <button class="btn" id="resume" disabled>Resume</button>
+          <button class="btn" id="clear">Clear</button>
+        </div>
+        <div class="bar"><i id="prog"></i></div>
+        <div class="stats">
+          <div class="stat"><b id="sLangs">0/0</b><span>Languages done</span></div>
+          <div class="stat"><b id="sNew">0</b><span>Translated</span></div>
+          <div class="stat"><b id="sKept">0</b><span>Kept</span></div>
+        </div>
+        <div id="results" style="margin-top:10px"></div>
+        <div class="out" id="outRow" hidden>
+          <div class="actions">
+            <button class="btn primary" id="dlZip">Download all as ZIP</button>
+            <button class="btn" id="save">Save into project folder</button>
+          </div>
+          <div class="hint" style="margin-top:8px">The ZIP has one folder per language, such as es.lproj/Localizable.strings. Unzip it next to en.lproj. "Save into project folder" writes the same files directly: choose the folder that contains en.lproj.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+// [name, Google/MyMemory code, iOS folder, Chrome code]
+const LANGS=[
+ ["Spanish","es","es","es"],["French","fr","fr","fr"],["German","de","de","de"],["Italian","it","it","it"],
+ ["Portuguese (Brazil)","pt-BR","pt-BR","pt"],["Dutch","nl","nl","nl"],["Russian","ru","ru","ru"],["Turkish","tr","tr","tr"],
+ ["Japanese","ja","ja","ja"],["Korean","ko","ko","ko"],["Chinese (Simplified)","zh-CN","zh-Hans","zh"],["Chinese (Traditional)","zh-TW","zh-Hant","zh-Hant"],
+ ["Arabic","ar","ar","ar"],["Hindi","hi","hi","hi"],["Gujarati","gu","gu","gu"],["Indonesian","id","id","id"],
+ ["Thai","th","th","th"],["Vietnamese","vi","vi","vi"],["Polish","pl","pl","pl"],["Swedish","sv","sv","sv"]
+];
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const langBox=$("langs");
+
+// ---------- languages ----------
+function addLangBox(i){langBox.insertAdjacentHTML("beforeend",`<label class="chip"><input type="checkbox" value="${i}"><span>${LANGS[i][0]}</span></label>`);}
+LANGS.forEach((l,i)=>addLangBox(i));
+function ensureLang(name){ // unknown .lproj folders become custom languages
+  const lc=name.toLowerCase();
+  let i=LANGS.findIndex(l=>l[2].toLowerCase()===lc);
+  if(i<0){const base=lc.split("-")[0];LANGS.push([name,base,name,base]);i=LANGS.length-1;addLangBox(i);}
+  return i;
+}
+function setSelected(names){
+  langBox.querySelectorAll("input").forEach(c=>c.checked=false);
+  names.forEach(n=>{const c=langBox.querySelector(`input[value="${ensureLang(n)}"]`);if(c)c.checked=true;});
+}
+const picked=()=>[...langBox.querySelectorAll("input:checked")].map(c=>LANGS[+c.value]);
+function saveSel(){try{localStorage.setItem("stringsLangs",JSON.stringify(picked().map(l=>l[2])));}catch(e){}}
+langBox.onchange=saveSel;
+$("all").onclick=()=>{langBox.querySelectorAll("input").forEach(c=>c.checked=true);saveSel();};
+$("none").onclick=()=>{langBox.querySelectorAll("input").forEach(c=>c.checked=false);saveSel();};
+try{const s=JSON.parse(localStorage.getItem("stringsLangs")||"null");setSelected(s&&s.length?s:["es","fr","de","it"]);}catch(e){setSelected(["es","fr","de","it"]);}
+
+// ---------- engine ----------
+const hasChrome="Translator" in self;
+if(!hasChrome)document.querySelector('input[value="chrome"]').disabled=true;
+const engine=()=>document.querySelector('input[name=engine]:checked').value;
+function engineUI(){
+  const e=engine();$("mmRow").hidden=e!=="mm";
+  $("engineHint").textContent=e==="gt"?"Uses the unofficial translate.googleapis.com web endpoint. No key needed. Google can rate-limit it, so if it stops, press Resume a little later."
+    :e==="chrome"?"Runs on-device in Chrome 138+. Each language model downloads once, and you click a button per new language. Not every language is supported."
+    :"Free MyMemory service. Daily character limit and lower quality than Google.";
+}
+document.querySelectorAll('input[name=engine]').forEach(r=>r.onchange=engineUI);engineUI();
+
+// ---------- parsing ----------
+const TOKEN=/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"((?:[^"\\]|\\.)*)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;/g;
+const ENTRY=/\/\*[\s\S]*?\*\/|\/\/[^\n]*|("((?:[^"\\]|\\.)*)"\s*=\s*")((?:[^"\\]|\\.)*)("\s*;)/g;
+const PROTECT=/%%|%(?:\d+\$)?[-+ 0#]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|h|ll|l|q|z|t|j)?[@dDiuUxXoOfeEgGcCsSpaA]|\\[nrt"\\]|\{[A-Za-z0-9_]+\}/g;
+function parse(text){
+  const out=[];
+  for(const m of text.matchAll(TOKEN))if(m[1]!==undefined)out.push({key:m[1],val:m[2]});
+  return out;
+}
+// keep blank lines, comments and spacing exactly as in the English file
+function buildFile(srcText,vals){
+  return srcText.replace(ENTRY,(m,pre,key,val,post)=>pre===undefined?m:pre+(key in vals?vals[key]:val)+post);
+}
+
+// ---------- inputs ----------
+let folderSources={};const existing={},origName={};
+$("folder").onchange=async e=>{
+  folderSources={};for(const k in existing)delete existing[k];
+  const all={};
+  for(const f of e.target.files){
+    const p=f.webkitRelativePath.split("/");
+    const li=p.findIndex(x=>x.toLowerCase().endsWith(".lproj"));
+    if(li<0||!f.name.endsWith(".strings"))continue;
+    const nm=p[li].slice(0,-6),lc=nm.toLowerCase();origName[lc]=nm;
+    (all[lc]=all[lc]||{})[f.name]=await f.text();
+  }
+  const base=all.en?"en":all.base?"base":null;
+  if(!base){$("folderInfo").textContent="No en.lproj folder with .strings files found in that folder.";return;}
+  folderSources=all[base];delete all[base];Object.assign(existing,all);
+  const others=Object.keys(existing).map(k=>origName[k]);
+  if(others.length){setSelected(others);saveSel();}
+  $("folderInfo").textContent=`Source: ${base}.lproj (${Object.keys(folderSources).join(", ")}). Languages found and selected: ${others.join(", ")||"none, pick languages on the left"}.`;
+};
+let srcName="Localizable.strings";
+$("file").onchange=async e=>{const f=e.target.files[0];if(f){srcName=f.name;$("src").value=await f.text();}};
+const getSources=()=>$("src").value.trim()?{[srcName]:$("src").value}:folderSources;
+
+// ---------- translation ----------
+async function translateValue(value,tr){
+  if(!value.trim())return value;
+  const ph=[];
+  const tokenized=value.replace(PROTECT,m=>{ph.push(m);return `[[${ph.length-1}]]`;});
+  if(!tokenized.replace(/\[\[\d+\]\]|[\s\W]/g,""))return value;
+  let out=await tr(tokenized);
+  const found=[...out.matchAll(/\[\[\s*(\d+)\s*\]\]/g)].map(m=>+m[1]).sort((a,b)=>a-b);
+  if(found.length===ph.length&&found.every((n,i)=>n===i)){
+    out=out.replace(/\[\[\s*(\d+)\s*\]\]/g,(_,n)=>ph[+n]);
+  }else{ // a token was damaged: translate the text between placeholders instead
+    let last=0;out="";
+    for(const m of value.matchAll(PROTECT)){
+      const seg=value.slice(last,m.index);
+      out+=(seg.trim()?await tr(seg):seg)+m[0];last=m.index+m[0].length;
+    }
+    const tail=value.slice(last);out+=tail.trim()?await tr(tail):tail;
+  }
+  return out.replace(/\r?\n/g,"\\n").replace(/(?<!\\)"/g,'\\"');
+}
+
+async function makeTranslator(lang,st,signal){
+  const e=engine();
+  if(e==="chrome"){
+    const opt={sourceLanguage:"en",targetLanguage:lang[3]};
+    const av=await Translator.availability(opt);
+    if(av==="unavailable")throw new Error("not supported by Chrome");
+    if(av!=="available"&&!navigator.userActivation.isActive){
+      await new Promise(res=>{ // Chrome only allows a model download right after a click
+        const b=document.createElement("button");b.className="btn primary sm";b.style.marginTop="6px";
+        b.textContent=`Download ${lang[0]} model`;b.onclick=()=>{b.remove();res();};st.after(b);
+      });
+    }
+    const t=await Translator.create({...opt,monitor(m){m.addEventListener("downloadprogress",ev=>{st.textContent=`Downloading model ${Math.round(ev.loaded*100)}%`;});}});
+    return s=>t.translate(s);
+  }
+  if(e==="gt"){
+    return async s=>{
+      const r=await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl="+lang[1].replace("pt-BR","pt")+"&dt=t&q="+encodeURIComponent(s),{signal});
+      if(!r.ok)throw new Error(r.status===429?"rate-limited by Google (429). Wait a bit, then press Resume":"HTTP "+r.status);
+      const j=await r.json();return j[0].map(x=>x[0]).join("");
+    };
+  }
+  const email=$("email").value.trim();
+  return async s=>{
+    const u=`https://api.mymemory.translated.net/get?q=${encodeURIComponent(s)}&langpair=en|${lang[1]}`+(email?`&de=${encodeURIComponent(email)}`:"");
+    const r=await fetch(u,{signal});const j=await r.json();
+    if(j.responseStatus!==200)throw new Error(String(j.responseDetails||"request failed").slice(0,80));
+    return j.responseData.translatedText;
+  };
+}
+
+// ---------- output ----------
+function crc32(b){let c,crc=-1;for(let i=0;i<b.length;i++){c=(crc^b[i])&255;for(let k=0;k<8;k++)c=c&1?(c>>>1)^0xEDB88320:c>>>1;crc=(crc>>>8)^c;}return(crc^-1)>>>0;}
+function zip(files){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  for(const f of files){
+    const n=enc.encode(f.path),d=enc.encode(f.text),crc=crc32(d);
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);
+    h.setUint32(14,crc,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,n.length,true);
+    parts.push(h.buffer,n,d);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true);c.setUint32(20,d.length,true);c.setUint32(24,d.length,true);c.setUint16(28,n.length,true);c.setUint32(42,off,true);
+    cd.push(c.buffer,n);off+=30+n.length+d.length;
+  }
+  const size=cd.reduce((a,b)=>a+b.byteLength,0);
+  const e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cd,e.buffer],{type:"application/zip"});
+}
+function download(name,blob){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+}
+const allFiles=()=>Object.values(outByLang).flatMap(o=>o.files);
+$("dlZip").onclick=()=>download("translated-lproj.zip",zip(allFiles()));
+$("save").onclick=async()=>{
+  if(!self.showDirectoryPicker)return alert("This browser can't save into folders. Use the ZIP download.");
+  try{
+    const root=await showDirectoryPicker({mode:"readwrite"}),files=allFiles();
+    for(const f of files){
+      const [d,n]=f.path.split("/");
+      const dir=await root.getDirectoryHandle(d,{create:true});
+      const w=await (await dir.getFileHandle(n,{create:true})).createWritable();
+      await w.write(f.text);await w.close();
+    }
+    alert(`Saved ${files.length} file(s) into the folder.`);
+  }catch(err){if(err.name!=="AbortError")alert("Could not save: "+err.message+". Use the ZIP download instead.");}
+};
+
+// ---------- run / stop / resume / clear ----------
+const STOP="__stop__";
+let cache={},outByLang={},running=false,stopFlag=false,ctl=null,pending=false,sKept=0;
+
+function setUI(){
+  $("go").disabled=running;$("stop").disabled=!running;
+  $("resume").disabled=running||!pending;$("clear").disabled=running;
+  const has=Object.keys(outByLang).length>0;
+  $("outRow").hidden=!has;$("save").hidden=!self.showDirectoryPicker;
+}
+function stats(total){
+  $("sLangs").textContent=`${Object.keys(outByLang).length}/${total}`;
+  $("sNew").textContent=Object.keys(cache).length;$("sKept").textContent=sKept;
+}
+function addRow(lang){
+  const row=document.createElement("div");row.className="res";
+  row.innerHTML=`<div><div class="nm">${lang[0]} <span class="hint">${lang[2]}.lproj</span></div><div class="st">Waiting</div></div><span></span>`;
+  $("results").appendChild(row);return row;
+}
+function finishRow(row,lang,o){
+  row.classList.add("done");row.querySelector(".st").textContent=o.msg;
+  const b=document.createElement("button");b.className="btn sm";b.textContent="Download ZIP";
+  b.onclick=()=>download(`${lang[2]}.lproj.zip`,zip(o.files));row.lastChild.replaceWith(b);
+}
+
+async function run(resume){
+  const srcs=getSources(),names=Object.keys(srcs),langs=picked();
+  if(!names.length)return alert("Choose a project folder, choose a file, or paste strings first.");
+  if(!langs.length)return alert("Select at least one language.");
+  if(!resume){cache={};outByLang={};sKept=0;}
+  saveSel();running=true;stopFlag=false;pending=false;ctl=new AbortController();setUI();
+  $("results").innerHTML="";
+  const perLang=names.reduce((a,n)=>a+parse(srcs[n]).length,0);
+  const total=langs.length*perLang||1;let done=0,stopped=false;
+  const bump=()=>{$("prog").style.width=Math.min(100,done/total*100)+"%";stats(langs.length);};
+  const rows=langs.map(l=>addRow(l));
+  langs.forEach((l,i)=>{if(outByLang[l[2]]){finishRow(rows[i],l,outByLang[l[2]]);done+=perLang;}});
+  bump();
+
+  for(let li=0;li<langs.length&&!stopped;li++){
+    const lang=langs[li],row=rows[li],st=row.querySelector(".st");
+    if(outByLang[lang[2]])continue;
+    try{
+      let nNew=0,nKept=0,tr=null;const files=[];
+      for(const name of names){
+        const entries=parse(srcs[name]);
+        const old=$("force").checked?{}:Object.fromEntries(parse((existing[lang[2].toLowerCase()]||{})[name]||"").map(x=>[x.key,x.val]));
+        const todo=entries.filter(x=>!(x.key in old));
+        const vals={};entries.forEach(x=>{if(x.key in old)vals[x.key]=old[x.key];});
+        nKept+=entries.length-todo.length;done+=entries.length-todo.length;
+        for(let i=0;i<todo.length;i++){
+          if(stopFlag)throw STOP;
+          const ck=`${lang[2]}|${name}|${todo[i].key}`;
+          if(cache[ck]===undefined){
+            tr=tr||await makeTranslator(lang,st,ctl.signal);
+            st.textContent=`${name}: ${i+1} of ${todo.length} new`;
+            cache[ck]=await translateValue(todo[i].val,tr);
+            if(engine()!=="chrome")await sleep(120);
+          }
+          vals[todo[i].key]=cache[ck];nNew++;done++;bump();
+        }
+        files.push({path:`${lang[2]}.lproj/${name}`,text:buildFile(srcs[name],vals)});
+      }
+      sKept+=nKept;
+      outByLang[lang[2]]={files,msg:nNew?`Done: ${nNew} new, ${nKept} kept`:"Up to date, nothing new"};
+      finishRow(row,lang,outByLang[lang[2]]);bump();
+    }catch(err){
+      pending=true;
+      if(err===STOP||err.name==="AbortError"){row.classList.add("paused");st.textContent="Paused. Press Resume to continue";stopped=true;}
+      else{row.classList.add("bad");st.textContent="Stopped: "+err.message;}
+    }
+  }
+  if(langs.some(l=>!outByLang[l[2]]))pending=true;
+  running=false;setUI();stats(langs.length);
+}
+
+$("go").onclick=()=>run(false);
+$("resume").onclick=()=>run(true);
+$("stop").onclick=()=>{stopFlag=true;ctl&&ctl.abort();$("stop").disabled=true;};
+$("clear").onclick=()=>{
+  cache={};outByLang={};sKept=0;pending=false;
+  $("results").innerHTML="";$("prog").style.width="0";stats(0);setUI();
+};
+setUI();stats(0);
+</script>
+</body>
+</html>
